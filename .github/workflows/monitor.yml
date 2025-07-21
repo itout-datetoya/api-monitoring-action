@@ -1,0 +1,43 @@
+# .github/workflows/monitor.yml
+
+name: API監視アクション
+
+on:
+  # 10分ごとに自動実行するためのスケジュール設定（cron）
+  schedule:
+    - cron: '*/12 * * * *'
+  # 手動でも実行できるようにするための設定
+  workflow_dispatch:
+
+jobs:
+  monitor_job:
+    # 実行環境として最新のUbuntuを使用
+    runs-on: ubuntu-latest
+    # タイムアウトを10分に設定
+    timeout-minutes: 10
+
+    steps:
+      # 1. リポジトリのコードをチェックアウト
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Node.js環境（バージョン20）をセットアップ
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. プロジェクトの依存関係をインストール
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Playwrightが必要とするブラウザとOSの依存関係をインストール（非常に重要！）
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # 5. Playwrightテストを実行
+      - name: Run Playwright Tests
+        run: npx playwright test
+        env:
+          # スクリプト内で使った環境変数をここで設定
+          TARGET_URL: 'https://hack-info-timeline-frontend.onrender.com/'
